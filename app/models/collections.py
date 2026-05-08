@@ -34,6 +34,7 @@ class Collection(UuidPkMixin, CreatedAtMixin, Base):
     collection_name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
+        unique=True,
     )
     created_by: Mapped[UUID] = mapped_column(
         UUID_A(as_uuid=True),

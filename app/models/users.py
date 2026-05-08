@@ -32,10 +32,12 @@ class User(CreatedAtMixin, UuidPkMixin, Base):
     user_name: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
+        unique=True,
     )
     email: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
+        unique=True,
     )
 
     collections: Mapped[list["Collection"]] = relationship(
