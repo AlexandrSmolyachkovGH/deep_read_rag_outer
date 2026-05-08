@@ -36,19 +36,19 @@ class PostgresHandler:
             bind=self.async_engine,
             class_=AsyncSession,
             autoflush=True,
-            expire_on_commit=True,
+            expire_on_commit=False,
         )
 
     async def dispose(self) -> None:
         """Dispose connection pool for async engine."""
         await self.async_engine.dispose()
 
-    async def get_session(
-        self,
-        request: Request,
-    ) -> AsyncGenerator[AsyncSession, None]:
-        """Retrieve async session from the factory."""
-        pg: PostgresHandler = request.state.pg_handler
 
-        async with pg.async_session_factory as async_session:
-            yield async_session
+async def get_session(
+    request: Request,
+) -> AsyncGenerator[AsyncSession, None]:
+    """Retrieve async session from the factory."""
+    pg: PostgresHandler = request.app.state.pg_handler
+
+    async with pg.async_session_factory() as async_session:
+        yield async_session
