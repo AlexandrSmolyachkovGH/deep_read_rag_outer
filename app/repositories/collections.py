@@ -14,7 +14,6 @@ from app.models import Collection
 class CollectionRepo:
     """Collection repository."""
 
-    @repo_error_decorator
     async def create_collection(
         self,
         session: AsyncSession,

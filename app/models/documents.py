@@ -9,6 +9,7 @@ from sqlalchemy import (
 from sqlalchemy import (
     ForeignKey,
     String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -39,13 +40,21 @@ class Document(UuidPkMixin, CreatedAtMixin, Base):
         UUID_A(as_uuid=True),
         ForeignKey(
             "users.id",
-            ondelete="SET NULL",
+            ondelete="CASCADE",
         ),
-        nullable=True,
+        nullable=False,
     )
     user: Mapped["User"] = relationship(
         "User",
         back_populates="documents",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "file_name",
+            "uploaded_by",
+            name="unique_file_user",
+        ),
     )
 
     def __str__(self) -> str:

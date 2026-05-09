@@ -18,6 +18,7 @@ from app.custom_exceptions.handlers import (
     handle_service_errors,
 )
 from app.routers.collections import router as collection_router
+from app.routers.documents import router as doc_router
 from app.routers.health import router as health_router
 from app.routers.root import router as root_router
 from app.routers.users import router as user_router
@@ -45,6 +46,7 @@ app.include_router(root_router)
 app.include_router(health_router)
 app.include_router(user_router)
 app.include_router(collection_router)
+app.include_router(doc_router)
 
 # Exception handlers
 app.add_exception_handler(RepositoryError, handle_repo_errors)
