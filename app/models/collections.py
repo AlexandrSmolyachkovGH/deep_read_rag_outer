@@ -23,7 +23,10 @@ from app.models.mixins.general_mixins import (
 )
 
 if TYPE_CHECKING:
-    from app.models import User
+    from app.models import (
+        Document,
+        User,
+    )
 
 
 class Collection(UuidPkMixin, CreatedAtMixin, Base):
@@ -47,6 +50,10 @@ class Collection(UuidPkMixin, CreatedAtMixin, Base):
     user: Mapped["User"] = relationship(
         "User",
         back_populates="collections",
+    )
+    documents: Mapped[list["Document"]] = relationship(
+        "Document",
+        back_populates="collection",
     )
 
     def __str__(self) -> str:

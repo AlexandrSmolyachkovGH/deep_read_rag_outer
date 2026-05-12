@@ -24,7 +24,10 @@ from app.models.mixins.general_mixins import (
 )
 
 if TYPE_CHECKING:
-    from app.models import User
+    from app.models import (
+        Collection,
+        User,
+    )
 
 
 class Document(UuidPkMixin, CreatedAtMixin, Base):
@@ -44,8 +47,20 @@ class Document(UuidPkMixin, CreatedAtMixin, Base):
         ),
         nullable=False,
     )
+    collection_id: Mapped[UUID] = mapped_column(
+        ForeignKey(
+            "collections.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    )
+
     user: Mapped["User"] = relationship(
         "User",
+        back_populates="documents",
+    )
+    collection: Mapped["Collection"] = relationship(
+        "Collection",
         back_populates="documents",
     )
 
@@ -64,6 +79,7 @@ class Document(UuidPkMixin, CreatedAtMixin, Base):
             f"id: {self.id}, "
             f"file_name: {self.file_name}, "
             f"uploaded_by: {self.uploaded_by}, "
+            f"collection_id: {self.collection_id}, "
             f"created_at: {self.created_at})"
         )
 
