@@ -95,7 +95,7 @@ async def ask_ai(
     question: Annotated[str, Body(...)],
     redis: Annotated[aredis.Redis, Depends(get_redis)],
 ) -> AskAIResp:
-    """Ask AI anything. Get an answer based on the stored data in the collected."""
+    """Ask AI anything. Get an answer based on the stored data in the collection."""
     ai_response = await ai_service.ask_ai(
         collection_id=collection_id,
         question=question,

@@ -16,7 +16,7 @@ class AIService:
         question: str,
         redis: aredis.Redis,
     ) -> dict:
-        """Get AI answer based on the stored data in the collected."""
+        """Get AI answer based on the stored data in relevant collection."""
         context, meta = await llm_handler.invoke_llm(
             question=question,
             collection_name=collection_id,
