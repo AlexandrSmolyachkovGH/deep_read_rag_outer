@@ -3,6 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
+import redis.asyncio as aredis
 from fastapi import (
     APIRouter,
     Depends,
@@ -15,6 +16,7 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.connections.pg import get_session
+from app.connections.redis import get_redis
 from app.schemes.documents import (
     CreateDocReq,
     DocResp,
@@ -36,7 +38,9 @@ router = APIRouter(
 async def upload_doc(
     file: Annotated[UploadFile, File(...)],
     user_id: Annotated[UUID, Form(...)],
+    collection_id: Annotated[UUID, Form(...)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    redis: Annotated[aredis.Redis, Depends(get_redis)],
 ) -> DocResp:
     """Upload new document."""
     doc = await doc_service.upload_doc(
@@ -44,8 +48,10 @@ async def upload_doc(
         create_data=CreateDocReq(
             file_name=file.filename,
             uploaded_by=user_id,
+            collection_id=collection_id,
         ),
         session=session,
+        redis=redis,
     )
 
     return DocResp.model_validate(doc)

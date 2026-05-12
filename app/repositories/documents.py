@@ -19,11 +19,13 @@ class DocumentRepository:
         session: AsyncSession,
         file_name: str,
         uploaded_by: UUID,
+        collection_id: UUID,
     ) -> Document:
         """Create new document."""
         doc = Document(
             file_name=file_name,
             uploaded_by=uploaded_by,
+            collection_id=collection_id,
         )
         session.add(doc)
         await session.flush()

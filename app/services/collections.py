@@ -8,6 +8,7 @@ from sqlalchemy.exc import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.connections.qdrant import qdrant_handler
 from app.custom_exceptions.exceptions import (
     NotFoundError,
     ServiceError,
@@ -53,7 +54,17 @@ class CollectionService:
                 "Database operation failed.",
             ) from err
 
+        try:
+            await qdrant_handler.create_collection(
+                collection_name=collection.id,
+            )
+
+        except Exception as exc:
+            await session.rollback()
+            raise ServiceError("Collection creation failed in qdrant") from exc
+
         await session.commit()
+
         return collection
 
     async def get_collection(

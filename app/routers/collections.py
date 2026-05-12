@@ -3,6 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
+import redis.asyncio as aredis
 from fastapi import (
     APIRouter,
     Body,
@@ -13,10 +14,13 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.connections.pg import get_session
+from app.connections.redis import get_redis
 from app.schemes.collections import (
+    AskAIResp,
     CollResp,
     CreateCollReq,
 )
+from app.services.ai import ai_service
 from app.services.collections import coll_service
 
 router = APIRouter(
@@ -78,3 +82,24 @@ async def get_collections(
     )
 
     return [CollResp.model_validate(coll) for coll in collections]
+
+
+@router.post(
+    path="/{collection_id}/ask-ai",
+    response_model=AskAIResp,
+    status_code=status.HTTP_201_CREATED,
+    description="Ask AI anything.",
+)
+async def ask_ai(
+    collection_id: Annotated[UUID, Path(...)],
+    question: Annotated[str, Body(...)],
+    redis: Annotated[aredis.Redis, Depends(get_redis)],
+) -> AskAIResp:
+    """Ask AI anything. Get an answer based on the stored data in the collected."""
+    ai_response = await ai_service.ask_ai(
+        collection_id=collection_id,
+        question=question,
+        redis=redis,
+    )
+
+    return AskAIResp.model_validate(ai_response)

@@ -7,6 +7,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.connections.pg import PostgresHandler
+from app.connections.redis import RedisHandler
 from app.custom_exceptions.exceptions import (
     NotFoundError,
     RepositoryError,
@@ -34,9 +35,13 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     )
     _app.state.pg_handler = pg_handler
 
+    redis_handler = RedisHandler()
+    _app.state.redis = redis_handler.get_client()
+
     yield
 
     await pg_handler.dispose()
+    await redis_handler.close_client()
 
 
 app = FastAPI(lifespan=lifespan)

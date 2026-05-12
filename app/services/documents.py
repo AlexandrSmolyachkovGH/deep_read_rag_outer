@@ -1,8 +1,10 @@
 """Document service."""
 
+import asyncio
 from pathlib import Path
 from uuid import UUID
 
+import redis.asyncio as aredis
 from fastapi import UploadFile
 from sqlalchemy.exc import (
     IntegrityError,
@@ -10,11 +12,14 @@ from sqlalchemy.exc import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.connections.qdrant import qdrant_handler
 from app.custom_exceptions.exceptions import (
     NotFoundError,
     ServiceError,
 )
+from app.doc_handler.doc_handler import doc_handler
 from app.models import Document
+from app.repositories.collections import coll_repo
 from app.repositories.documents import doc_repo
 from app.repositories.users import user_repo
 from app.schemes.documents import (
@@ -51,6 +56,7 @@ class DocumentService:
         file: UploadFile,
         create_data: CreateDocReq,
         session: AsyncSession,
+        redis: aredis.Redis,
     ) -> Document:
         """Upload new document."""
         user_check = await user_repo.get_user(
@@ -62,23 +68,59 @@ class DocumentService:
                 f"User {create_data.uploaded_by} not found.",
             )
 
+        collection_check = await coll_repo.get_collection(
+            session=session,
+            collection_id=create_data.collection_id,
+        )
+        if not collection_check:
+            raise NotFoundError(
+                f"Collection {create_data.collection_id} not found.",
+            )
+
         self.validate_filetype(file=file)
         try:
             new_doc = await doc_repo.create_doc(
                 session=session,
                 file_name=create_data.file_name,
                 uploaded_by=create_data.uploaded_by,
+                collection_id=create_data.collection_id,
             )
+
         except IntegrityError as err:
+            await session.rollback()
             raise ServiceError(
                 f"File '{create_data.file_name}' had been uploaded"
                 f" previously by {create_data.uploaded_by}.",
             ) from err
 
         except SQLAlchemyError as err:
-            raise SQLAlchemyError(
+            await session.rollback()
+            raise ServiceError(
                 "Database operation failed.",
             ) from err
+
+        try:
+            documents = await doc_handler.create_documents_from_file(
+                file=file,
+                document_id=new_doc.id,
+                user_id=create_data.uploaded_by,
+                collection_id=create_data.collection_id,
+            )
+
+            doc_chunks = await asyncio.to_thread(
+                doc_handler.split_document,
+                documents=documents,
+            )
+
+            await qdrant_handler.vectorize_documents_batch(
+                collection_name=create_data.collection_id,
+                documents=doc_chunks,
+                redis=redis,
+            )
+
+        except ValueError:
+            await session.rollback()
+            raise
 
         await session.commit()
 
