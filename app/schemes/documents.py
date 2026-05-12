@@ -18,6 +18,7 @@ class CreateDocReq(BaseModel):
         ...,
         description="Owner unique ID.",
     )
+    collection_id: UUID
 
 
 class DocResp(BaseResponseMixin, CreateDocReq):

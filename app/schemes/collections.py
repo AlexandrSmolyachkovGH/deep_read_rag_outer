@@ -7,7 +7,7 @@ from pydantic import (
     Field,
 )
 
-from app.schemes.mixins import BaseResponseMixin
+from app.schemes.mixins import BaseResponseMixin, ResponseMixin
 
 
 class CreateCollReq(BaseModel):
@@ -22,3 +22,10 @@ class CreateCollReq(BaseModel):
 
 class CollResp(BaseResponseMixin, CreateCollReq):
     """Collection response scheme."""
+
+
+class AskAIResp(ResponseMixin):
+    """Ask AI response scheme."""
+
+    context: str
+    meta: list[str]
